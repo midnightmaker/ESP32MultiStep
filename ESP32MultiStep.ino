@@ -23,6 +23,7 @@ const char* webPage = "<!DOCTYPE HTML><html><head><meta name='viewport' content=
                        "</html>";
 
 
+
 class BlockingStepper{
 
   int stepPin = 1;
@@ -31,6 +32,10 @@ class BlockingStepper{
   int reqPosition = 0;
   int stepsToMove = 0;
   
+public:
+	enum MotorAction { Stop, Forward, Reverse };
+
+
   public:
 
     BlockingStepper( int stepPin, int directionPin )
@@ -88,13 +93,59 @@ class BlockingStepper{
 BlockingStepper xStepper( 5, 18 );
 BlockingStepper yStepper( 22, 21 );
 BlockingStepper zStepper( 15, 23 );
+BlockingStepper cStepper(15, 23);
+
+#define MAX_STEPPERS 4
+BlockingStepper steppers[MAX_STEPPERS] = { xStepper, yStepper, zStepper, cStepper };
 
 volatile int stepCounterGlob = 0;
+
 void countSteps(void)
 {
   
   stepCounterGlob++;
   
+}
+
+void processMovement(BlockingStepper::MotorAction ma, AsyncWebServerRequest* request)
+{
+
+	int paramCount = request->params();
+	Serial.println(paramCount);
+
+	for (int i = 0; i<paramCount; i++) {
+		AsyncWebParameter* p = request->getParam(i);
+		Serial.printf("%d: %s = %s\n", paramCount, p->name(), p->value());
+		if (request->getParam(0)->name() == "motorID")
+		{
+			int motorIndex = request->getParam(0)->value().toInt();
+
+			if (motorIndex < MAX_STEPPERS ) {
+				int direction = 
+				steppers[motorIndex].
+			}
+		}
+	}
+
+	if (paramCount >= 3)
+	{
+		Serial.println("--- End of parameter list --- ");
+		if ()
+		{
+
+
+		}
+		String distance = request->getParam(1)->valuename();
+		String motorName = request->getParam(0)->name();
+		motorName.toUpperCase();
+
+		if (motorName == "X") {
+
+		}
+	}
+		
+
+
 }
 
 void setup()
@@ -144,28 +195,19 @@ void setup()
     request->redirect("https://techtutorialsx.com/");
   });
  */
+		// Send the default web page
 		server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
 			request->send(200, "text/html", webPage);
 		});
   
+		// Command motor to move 
     server.on("/forward", HTTP_GET, [](AsyncWebServerRequest *request){
  
-    int paramsNr = request->params();
-    Serial.println(paramsNr);
- 
-    for(int i=0;i<paramsNr;i++){
-         
-        AsyncWebParameter* p = request->getParam(i);
-        
-        Serial.println(p->name());
-        Serial.print("=");
-        Serial.println(p->value());
-        
-    }
-		Serial.println("--- End of parameter list --- ");
-     
-    request->send(200, "text/html", webPage);
-  });
+			processMovement(BlockingStepper::Forward, request );
+			
+			request->send(200, "text/html", webPage);
+
+		});
   
   server.begin();
 
